@@ -17,8 +17,14 @@ from ..base.constants import (
 )
 from .repr import TOOAPIReprMixin
 
-# Always show deprecation warnings
-warnings.simplefilter("always", DeprecationWarning)
+
+class SwiftToolsDeprecationWarning(DeprecationWarning):
+    """Deprecation notices raised by swifttools itself."""
+
+
+# Always show our own deprecation warnings. Filtering on the subclass leaves
+# every other library's warnings alone.
+warnings.simplefilter("always", SwiftToolsDeprecationWarning)
 
 
 # Make Warnings a little less weird
@@ -466,7 +472,8 @@ class TOOAPIBaseclass(TOOAPIReprMixin):
         assert hasattr(self, "_get_schema"), "GET schema not defined for this API class."
         assert hasattr(self, "model_dump"), "Not a Pydantic model."
 
-        args = self._get_schema.model_validate(self._schema_payload(self._get_schema)).model_dump(exclude_none=True)
+        validated = self._get_schema.model_validate(self._schema_payload(self._get_schema))
+        args = validated.model_dump(exclude_none=True, by_alias=True)
         args.pop("status", None)
         return args
 
